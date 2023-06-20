@@ -15,7 +15,7 @@ in hash tables. It has a couple desirable properties:
  
  - It is very fast for short inputs, while being no slouch for longer inputs. On
    an Apple M1 machine it can hash any input <= 49 bytes in 21 cycles, and
-   processes 33.55 GiB/sec (11.7 bytes / cycle) for long inputs.
+   processes 33.3 GiB/sec (11.6 bytes / cycle) for long inputs.
    
  - It is cross-platform, using no extended instruction sets such as
    CLMUL or AES-NI. For good speed it only requires native 64 x 64 -> 128 bit
