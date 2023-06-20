@@ -57,8 +57,10 @@ static inline uint64_t polymur_hash(const uint8_t* buf, size_t len, const Polymu
 // ---------- Cross-platform compatibility ----------
 #if (defined(__GNUC__) || defined(__clang__) || defined(__INTEL_COMPILER))
     #define POLYMUR_LIKELY(x) (__builtin_expect(!!(x), 1))
+    #define POLYMUR_UNLIKELY(x) (__builtin_expect(!!(x), 0))
 #else
     #define POLYMUR_LIKELY(x) (!!(x))
+    #define POLYMUR_UNLIKELY(x) (!!(x))
 #endif
 
 // No #ifdefs needed, modern compilers all optimize this away.
@@ -231,15 +233,35 @@ static inline uint64_t polymur_hash_poly611(const uint8_t* buf, size_t len, cons
 
     if (POLYMUR_LIKELY(len <= 7)) {
         if (len == 0) return 0;
-    polymur_len1_7:
         m[0] = polymur_load_le_u64_1_8(buf, len);
         return poly_acc + polymur_red611(polymur_mul128(p->k + m[0], p->k2 + len));
     }
     
     uint64_t k3 = polymur_red611(polymur_mul128( p->k, p->k2));
     uint64_t k4 = polymur_red611(polymur_mul128(p->k2, p->k2));
-    if (POLYMUR_LIKELY(len <= 49)) {
-    polymur_len8_49:
+    if (POLYMUR_UNLIKELY(len >= 50)) {
+        const uint64_t k5 = polymur_extrared611(polymur_red611(polymur_mul128(p->k,  k4)));
+        const uint64_t k6 = polymur_extrared611(polymur_red611(polymur_mul128(p->k2, k4)));
+        k3 = polymur_extrared611(k3);
+        k4 = polymur_extrared611(k4);
+        uint64_t h = 0;
+        do {
+            for (int i = 0; i < 7; ++i) m[i] = polymur_load_le_u64(buf + 7*i) & 0x00ffffffffffffffULL;
+            polymur_u128_t t0 = polymur_mul128(p->k  + m[0], k6 + m[1]);
+            polymur_u128_t t1 = polymur_mul128(p->k2 + m[2], k5 + m[3]);
+            polymur_u128_t t2 = polymur_mul128(   k3 + m[4], k4 + m[5]);
+            polymur_u128_t t3 = polymur_mul128(   h  + m[6], p->k7);
+            polymur_u128_t  s = polymur_add128(polymur_add128(t0, t1), polymur_add128(t2, t3));
+            h = polymur_red611(s);
+            len -= 49;
+            buf += 49;
+        } while (len >= 50);
+        const uint64_t k14 = polymur_red611(polymur_mul128(p->k7, p->k7));
+        uint64_t hk14 = polymur_red611(polymur_mul128(polymur_extrared611(h), k14));
+        poly_acc += polymur_extrared611(hk14);
+    }
+    
+    if (POLYMUR_LIKELY(len >= 8)) {
         m[0] = polymur_load_le_u64(buf) & 0x00ffffffffffffffULL;
         m[1] = polymur_load_le_u64(buf + (len - 7) / 2) & 0x00ffffffffffffffULL;
         m[2] = polymur_load_le_u64(buf + len - 8) >> 8;
@@ -257,28 +279,8 @@ static inline uint64_t polymur_hash_poly611(const uint8_t* buf, size_t len, cons
         return poly_acc + polymur_red611(s);
     }
 
-    const uint64_t k5 = polymur_extrared611(polymur_red611(polymur_mul128(p->k,  k4)));
-    const uint64_t k6 = polymur_extrared611(polymur_red611(polymur_mul128(p->k2, k4)));
-    k3 = polymur_extrared611(k3);
-    k4 = polymur_extrared611(k4);
-    uint64_t h = 0;
-    while (len >= 50) {
-        for (int i = 0; i < 7; ++i) m[i] = polymur_load_le_u64(buf + 7*i) & 0x00ffffffffffffffULL;
-        polymur_u128_t t0 = polymur_mul128(p->k  + m[0], k6 + m[1]);
-        polymur_u128_t t1 = polymur_mul128(p->k2 + m[2], k5 + m[3]);
-        polymur_u128_t t2 = polymur_mul128(   k3 + m[4], k4 + m[5]);
-        polymur_u128_t t3 = polymur_mul128(   h  + m[6], p->k7);
-        polymur_u128_t  s = polymur_add128(polymur_add128(t0, t1), polymur_add128(t2, t3));
-        h = polymur_red611(s);
-        len -= 49;
-        buf += 49;
-    }
-    const uint64_t k14 = polymur_red611(polymur_mul128(p->k7, p->k7));
-    uint64_t hk14 = polymur_red611(polymur_mul128(polymur_extrared611(h), k14));
-    poly_acc += polymur_extrared611(hk14);
-
-    if (len <= 7) goto polymur_len1_7;
-    goto polymur_len8_49;
+    m[0] = polymur_load_le_u64_1_8(buf, len);
+    return poly_acc + polymur_red611(polymur_mul128(p->k + m[0], p->k2 + len));
 }
 
 static inline uint64_t polymur_hash(const uint8_t* buf, size_t len, const PolymurHashParams* p, uint64_t tweak) {
