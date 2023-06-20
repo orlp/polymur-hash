@@ -78,6 +78,10 @@ without having to calculate new parameters from another seed. This can prevent
 certain worst-case problems when inserting into a second hash table while
 iterating over another.
 
+### License
+
+PolymurHash is available under the zlib license, included in `polymur-hash.h`.
+
 
 ## How it works and why it's fast
 
