@@ -44,7 +44,7 @@ reduced-round variants with unknown cryptanalysis, or to use a fast but insecure
 hash altogether.
 
 Needless to say, PolymurHash passes the full [SMHasher
-suite](https://github.com/rurban/smhasher/) without any failures. For the proof
+suite](https://github.com/rurban/smhasher/) without any failures[*](https://github.com/rurban/smhasher/issues/114#issuecomment-1587631635). For the proof
 of the collision rate, see
 [`extras/universality-proof.md`](extras/universality-proof.md).
 
