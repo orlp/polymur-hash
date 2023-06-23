@@ -35,7 +35,7 @@ k7 = 2**60 - 2**56 - 1
 m = 2**56 - 1
 l = 49
     
-def test_1_7():
+def test_0_7():
     s = u128mul(u64add(k, m), u64add(k2, l))
     return u64reduce(s)
 
@@ -74,12 +74,12 @@ def test_large():
     hk14 = u64reduce(u128mul(u64reduce(h), k14))
     return u64reduce(hk14)
 
-max17 = test_1_7()
+max07 = test_0_7()
 max821 = test_8_21()
 max2249 = test_22_49()
 maxlarge = test_large()
 
-check(u64add(maxlarge, max17))
+check(u64add(maxlarge, max07))
 check(u64add(maxlarge, max821))
 check(u64add(maxlarge, max2249))
     

@@ -1,5 +1,5 @@
 /*
-    PolymurHash version 1.0
+    PolymurHash version 2.0
 
     Copyright (c) 2023 Orson Peters
     
@@ -87,9 +87,10 @@ static inline uint64_t polymur_load_le_u64(const uint8_t* p) {
     return polymur_is_little_endian() ? v : polymur_bswap64(v);
 }
 
-// Loads 1 to 8 bytes from buf with length len > 0 as a 64-bit little-endian integer.
-static inline uint64_t polymur_load_le_u64_1_8(const uint8_t* buf, size_t len) {
+// Loads 0 to 8 bytes from buf with length len as a 64-bit little-endian integer.
+static inline uint64_t polymur_load_le_u64_0_8(const uint8_t* buf, size_t len) {
     if (len < 4) {
+        if (len == 0) return 0;
         uint64_t v = buf[0];
         v |= buf[len / 2] << 8 * (len / 2);
         v |= buf[len - 1] << 8 * (len - 1);
@@ -232,8 +233,7 @@ static inline uint64_t polymur_hash_poly611(const uint8_t* buf, size_t len, cons
     uint64_t poly_acc = tweak;
 
     if (POLYMUR_LIKELY(len <= 7)) {
-        if (len == 0) return 0;
-        m[0] = polymur_load_le_u64_1_8(buf, len);
+        m[0] = polymur_load_le_u64_0_8(buf, len);
         return poly_acc + polymur_red611(polymur_mul128(p->k + m[0], p->k2 + len));
     }
     
@@ -279,12 +279,11 @@ static inline uint64_t polymur_hash_poly611(const uint8_t* buf, size_t len, cons
         return poly_acc + polymur_red611(s);
     }
 
-    m[0] = polymur_load_le_u64_1_8(buf, len);
+    m[0] = polymur_load_le_u64_0_8(buf, len);
     return poly_acc + polymur_red611(polymur_mul128(p->k + m[0], p->k2 + len));
 }
 
 static inline uint64_t polymur_hash(const uint8_t* buf, size_t len, const PolymurHashParams* p, uint64_t tweak) {
-    if (len == 0) return 0;
     uint64_t h = polymur_hash_poly611(buf, len, p, tweak);
     return polymur_mix(h) + p->s;
 }

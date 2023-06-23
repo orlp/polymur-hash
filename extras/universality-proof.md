@@ -46,7 +46,7 @@ To finish off the process before handling the final block we multiply `f` by
 size, a different injective polynomial of maximum degree < 14 to encode the
 final block. These polynomials are:
 
-    length 1..7
+    length 0..7
     f += (k + m[0]) * (k^2 + l)
 
     k^3 + m[0]*k^2 + l*k + l*m[0]
